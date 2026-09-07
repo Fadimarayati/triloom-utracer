@@ -1,0 +1,87 @@
+[
+  {
+    "id": "demo_hbb_5utr_core",
+    "name": "Demo HBB 5-prime UTR core",
+    "sequence": "ACATTTGCTTCTGACACAACTGTGTTCACTAGCAACCTCAAACAGACACC",
+    "source": "demo_internal",
+    "category": "utr",
+    "utr_type": "5_prime",
+    "organism": "Homo sapiens",
+    "accession": "demo:HBB:5UTR:core",
+    "canonical_id": "HBB_5UTR_demo_core",
+    "provenance": "Demo reference for local pipeline tests; replace with curated GENCODE/RefSeq/UTRdb sequence in production.",
+    "provenance_url": "https://www.gencodegenes.org/pages/data_access.html",
+    "provenance_score": 0.45
+  },
+  {
+    "id": "demo_hbb_5utr_variant_plus_base",
+    "name": "Demo HBB 5-prime UTR one-base variant",
+    "sequence": "ACATTTGCTTCTGACACAACTGTGTTCACTAGCAACCTCAAACAGATACC",
+    "source": "demo_internal",
+    "category": "utr",
+    "utr_type": "5_prime",
+    "organism": "Homo sapiens",
+    "accession": "demo:HBB:5UTR:variant",
+    "canonical_id": "HBB_5UTR_demo_variant",
+    "provenance": "Synthetic near-match control for ranking tests.",
+    "provenance_url": "https://www.gencodegenes.org/pages/data_access.html",
+    "provenance_score": 0.35
+  },
+  {
+    "id": "demo_t7_promoter",
+    "name": "T7 promoter",
+    "sequence": "TAATACGACTCACTATAGGG",
+    "source": "construct_feature",
+    "category": "promoter",
+    "utr_type": null,
+    "organism": "synthetic / bacteriophage T7",
+    "accession": "demo:T7:promoter",
+    "canonical_id": "T7_PROMOTER",
+    "provenance": "Common in vitro transcription promoter motif.",
+    "provenance_url": "https://www.ncbi.nlm.nih.gov/tools/vecscreen/",
+    "provenance_score": 0.7
+  },
+  {
+    "id": "demo_kozak_start",
+    "name": "Kozak consensus plus start codon",
+    "sequence": "GCCACCATGG",
+    "source": "construct_feature",
+    "category": "translation_context",
+    "utr_type": null,
+    "organism": "synthetic / eukaryotic expression",
+    "accession": "demo:kozak:start",
+    "canonical_id": "KOZAK_START",
+    "provenance": "Common eukaryotic translation initiation context.",
+    "provenance_url": "https://www.ncbi.nlm.nih.gov/tools/vecscreen/",
+    "provenance_score": 0.65
+  },
+  {
+    "id": "demo_sv40_poly_a_region",
+    "name": "SV40 late polyadenylation signal region",
+    "sequence": "AGGACCTTATTTTGGACATGAGATTTGGACAAACCACAACTAGAATGCAGTGAAAAAAATGCTTTATTTGTGAAATTTGTGATGCTATTGCTTTATTTGTAACCATTATAAGCTGCAATAAACAAGTTAACAACAACAATTGCATTCATTTTATGTTTCAGGTTCAGGGGGAGGTGTGGGAGGTTTTTTAAAGCAAGTAAAACCTCTACAAATGTGGTATGGCTGATTATGATC",
+    "source": "construct_feature",
+    "category": "polyadenylation",
+    "utr_type": "3_prime",
+    "organism": "SV40",
+    "accession": "demo:SV40:polyA",
+    "canonical_id": "SV40_LATE_POLYA_DEMO",
+    "provenance": "Demo vector/polyadenylation reference segment.",
+    "provenance_url": "https://www.ncbi.nlm.nih.gov/tools/vecscreen/",
+    "provenance_score": 0.5
+  },
+  {
+    "id": "demo_cloning_linker",
+    "name": "Common cloning linker with BsaI sites",
+    "sequence": "GGTCTCGGTCTC",
+    "source": "construct_feature",
+    "category": "linker_adapter",
+    "utr_type": null,
+    "organism": "synthetic",
+    "accession": "demo:linker:BsaI",
+    "canonical_id": "BSAI_LINKER_DEMO",
+    "provenance": "Synthetic linker/adaptor control.",
+    "provenance_url": "https://www.ncbi.nlm.nih.gov/tools/vecscreen/",
+    "provenance_score": 0.45
+  }
+]
+
