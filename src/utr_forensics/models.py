@@ -195,6 +195,34 @@ class AdapterNotice:
         }
 
 
+@dataclass(frozen=True)
+class SourceScan:
+    source: str
+    status: str
+    hit_count: int
+    best_reference: str | None = None
+    best_identity: float | None = None
+    best_query_coverage: float | None = None
+    best_reference_coverage: float | None = None
+    best_origin_confidence: float | None = None
+    best_canonical_confidence: float | None = None
+    note: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source": self.source,
+            "status": self.status,
+            "hit_count": self.hit_count,
+            "best_reference": self.best_reference,
+            "best_identity": round(self.best_identity, 4) if self.best_identity is not None else None,
+            "best_query_coverage": round(self.best_query_coverage, 4) if self.best_query_coverage is not None else None,
+            "best_reference_coverage": round(self.best_reference_coverage, 4) if self.best_reference_coverage is not None else None,
+            "best_origin_confidence": round(self.best_origin_confidence, 4) if self.best_origin_confidence is not None else None,
+            "best_canonical_confidence": round(self.best_canonical_confidence, 4) if self.best_canonical_confidence is not None else None,
+            "note": self.note,
+        }
+
+
 @dataclass
 class VisualOutputs:
     query_track_svg: Path | None = None
@@ -223,10 +251,13 @@ class AnalysisResult:
     output_dir: Path
     visuals: VisualOutputs = field(default_factory=VisualOutputs)
     pdf_path: Path | None = None
+    query_id: str | None = None
+    source_scans: list[SourceScan] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "query": {
+                "id": self.query_id,
                 "sequence": self.normalized.sequence,
                 "length": self.normalized.length,
                 "molecule": self.normalized.molecule,
@@ -239,8 +270,8 @@ class AnalysisResult:
             "candidates": [candidate.to_dict() for candidate in self.candidates],
             "segments": [segment.to_dict() for segment in self.segments],
             "classification_signals": [signal.to_dict() for signal in self.classification_signals],
+            "source_scans": [scan.to_dict() for scan in self.source_scans],
             "notices": [notice.to_dict() for notice in self.notices],
             "visuals": self.visuals.to_dict(),
             "pdf_path": str(self.pdf_path) if self.pdf_path else None,
         }
-

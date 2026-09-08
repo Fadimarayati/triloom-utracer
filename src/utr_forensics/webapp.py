@@ -32,6 +32,7 @@ class UTRRequestHandler(BaseHTTPRequestHandler):
         body = self.rfile.read(length).decode("utf-8")
         form = urllib.parse.parse_qs(body)
         raw_sequence = form.get("sequence", [""])[0]
+        query_id = form.get("query_id", [""])[0].strip() or None
         deep = form.get("deep_external_search", ["off"])[0] == "on"
         run_id = time.strftime("%Y%m%d-%H%M%S")
         output_dir = self.output_base / run_id
@@ -41,13 +42,14 @@ class UTRRequestHandler(BaseHTTPRequestHandler):
                 output_dir=output_dir,
                 references_path=self.references_path,
                 deep_external_search=deep,
+                query_id=query_id,
             )
             track_svg = Path(result.visuals.query_track_svg).read_text(encoding="utf-8") if result.visuals.query_track_svg else ""
             alignment_svg = Path(result.visuals.alignment_svg).read_text(encoding="utf-8") if result.visuals.alignment_svg else ""
             result_html = _result_panel(result, run_id, track_svg, alignment_svg)
-            self._send_html(_page(raw_sequence=raw_sequence, result_html=result_html, deep=deep))
+            self._send_html(_page(raw_sequence=raw_sequence, query_id=query_id or "", result_html=result_html, deep=deep))
         except SequenceValidationError as exc:
-            self._send_html(_page(raw_sequence=raw_sequence, error=str(exc), deep=deep), status=400)
+            self._send_html(_page(raw_sequence=raw_sequence, query_id=query_id or "", error=str(exc), deep=deep), status=400)
 
     def _serve_artifact(self, url_path: str) -> None:
         relative = Path(url_path.removeprefix("/runs/"))
@@ -94,7 +96,7 @@ def serve(*, host: str, port: int, references_path: str | Path, output_base: str
     server.serve_forever()
 
 
-def _page(raw_sequence: str = "", result_html: str = "", error: str | None = None, deep: bool = False) -> str:
+def _page(raw_sequence: str = "", query_id: str = "", result_html: str = "", error: str | None = None, deep: bool = False) -> str:
     checked = "checked" if deep else ""
     error_html = f'<div class="notice error">{html.escape(error)}</div>' if error else ""
     return f"""<!doctype html>
@@ -139,9 +141,8 @@ def _page(raw_sequence: str = "", result_html: str = "", error: str | None = Non
       border-radius: 8px;
     }}
     label {{ font-weight: 700; }}
-    textarea {{
+    input[type="text"], textarea {{
       width: 100%;
-      min-height: 190px;
       resize: vertical;
       border: 1px solid var(--line);
       border-radius: 6px;
@@ -149,6 +150,13 @@ def _page(raw_sequence: str = "", result_html: str = "", error: str | None = Non
       font: 15px/1.45 Consolas, "Courier New", monospace;
       color: var(--ink);
       background: #ffffff;
+    }}
+    input[type="text"] {{
+      min-height: 44px;
+      resize: none;
+    }}
+    textarea {{
+      min-height: 190px;
     }}
     .row {{
       display: flex;
@@ -166,7 +174,7 @@ def _page(raw_sequence: str = "", result_html: str = "", error: str | None = Non
       padding: 11px 16px;
       cursor: pointer;
     }}
-    button:focus-visible, textarea:focus-visible {{
+    button:focus-visible, input:focus-visible, textarea:focus-visible {{
       outline: 3px solid #a7f3d0;
       outline-offset: 2px;
     }}
@@ -228,6 +236,8 @@ def _page(raw_sequence: str = "", result_html: str = "", error: str | None = Non
   <main>
     <h1>Triloom UTRacer</h1>
     <form method="post" action="/run">
+      <label for="query_id">Query ID</label>
+      <input type="text" id="query_id" name="query_id" value="{html.escape(query_id)}" placeholder="TriUTR-0001" />
       <label for="sequence">Sequence</label>
       <textarea id="sequence" name="sequence" spellcheck="false">{html.escape(raw_sequence)}</textarea>
       <div class="row">

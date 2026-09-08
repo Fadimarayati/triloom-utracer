@@ -14,7 +14,7 @@ The default mode is private and local-only. External services are represented as
 - Decomposes likely engineered/chimeric sequences into non-overlapping annotated query segments.
 - Ranks candidates with identity, query coverage, reference coverage, provenance, sequence-origin confidence, and canonical-identity confidence.
 - Writes a horizontal query-track visual and a base-level alignment/mismatch visual as SVG and PNG.
-- Generates a concise PDF result report with the top conclusion, ranked candidates, evidence trail, and visuals.
+- Generates a compact, code-like PDF result report with the top conclusion, source-by-source scan summary, best hit, ranked candidates, evidence trail, segment calls, and visuals.
 - Includes a dependency-light CLI and simple local web UI.
 
 ## Repository layout
@@ -53,6 +53,13 @@ From the repository root:
 ```powershell
 $env:PYTHONPATH = "src"
 python -m utr_forensics.cli run --sequence-file examples/example_sequence.txt --out analysis_runs/example
+```
+
+Add a stable query label when comparing real unknowns:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m utr_forensics.cli run --sequence-file examples/example_sequence.txt --query-id TriUTR-0001 --out analysis_runs/TriUTR-0001
 ```
 
 Or paste a raw sequence:

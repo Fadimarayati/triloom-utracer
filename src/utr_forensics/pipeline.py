@@ -7,7 +7,7 @@ from pathlib import Path
 from .adapters.external import build_external_notices
 from .adapters.local import LocalReferenceAdapter
 from .classify import classify_sequence
-from .models import AnalysisResult, NormalizedSequence, VisualOutputs
+from .models import AdapterNotice, AnalysisResult, Candidate, NormalizedSequence, SourceScan, VisualOutputs
 from .ranking import select_segments
 from .reference_io import write_json
 from .report import write_pdf_report
@@ -25,6 +25,7 @@ def run_analysis(
     output_dir: str | Path,
     references_path: str | Path | None = None,
     deep_external_search: bool = False,
+    query_id: str | None = None,
 ) -> AnalysisResult:
     normalized = normalize_sequence(raw_sequence)
     output = Path(output_dir)
@@ -36,6 +37,7 @@ def run_analysis(
     signals = classify_sequence(normalized)
     segments = select_segments(candidates, normalized.length)
     notices = build_external_notices(deep_external_search=deep_external_search)
+    source_scans = build_source_scans(candidates, notices)
 
     conclusion, top_confidence = build_conclusion(normalized, candidates, segments, signals)
     result = AnalysisResult(
@@ -47,6 +49,8 @@ def run_analysis(
         classification_signals=signals,
         notices=notices,
         output_dir=output,
+        query_id=query_id,
+        source_scans=source_scans,
     )
 
     visual_paths = write_visuals(
@@ -64,6 +68,42 @@ def run_analysis(
     result.pdf_path = write_pdf_report(result, output / "triloom_utracer_report.pdf")
     write_json(output / "result.json", result.to_dict())
     return result
+
+
+def build_source_scans(candidates: list[Candidate], notices: list[AdapterNotice]) -> list[SourceScan]:
+    scans: list[SourceScan] = []
+    by_source: dict[str, list[Candidate]] = {}
+    for candidate in candidates:
+        by_source.setdefault(candidate.reference.source, []).append(candidate)
+
+    for source, source_candidates in sorted(by_source.items()):
+        best = source_candidates[0]
+        scans.append(
+            SourceScan(
+                source=source,
+                status="hit",
+                hit_count=len(source_candidates),
+                best_reference=best.reference.name,
+                best_identity=best.alignment.identity,
+                best_query_coverage=best.alignment.query_coverage,
+                best_reference_coverage=best.alignment.reference_coverage,
+                best_origin_confidence=best.sequence_origin_confidence,
+                best_canonical_confidence=best.canonical_identity_confidence,
+                note=best.evidence[0] if best.evidence else "Local alignment hit.",
+            )
+        )
+
+    for notice in notices:
+        scan_status = "skipped" if notice.status.startswith("skipped") else notice.status
+        scans.append(
+            SourceScan(
+                source=notice.adapter,
+                status=scan_status,
+                hit_count=0,
+                note=notice.message,
+            )
+        )
+    return scans
 
 
 def build_conclusion(normalized: NormalizedSequence, candidates, segments, signals) -> tuple[str, float]:

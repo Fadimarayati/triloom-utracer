@@ -20,6 +20,7 @@ def main(argv: list[str] | None = None) -> int:
     source.add_argument("--sequence-file", type=Path, help="File containing a raw sequence or FASTA entry.")
     run_parser.add_argument("--references", type=Path, default=default_reference_path(), help="Local JSON/FASTA reference corpus.")
     run_parser.add_argument("--out", type=Path, default=Path("analysis_runs/latest"), help="Output directory.")
+    run_parser.add_argument("--query-id", help="Optional identifier shown in result files and PDF reports.")
     run_parser.add_argument(
         "--deep-external-search",
         action="store_true",
@@ -51,6 +52,7 @@ def _run(args) -> int:
             output_dir=args.out,
             references_path=args.references,
             deep_external_search=args.deep_external_search,
+            query_id=args.query_id,
         )
     except SequenceValidationError as exc:
         print(f"Sequence validation failed: {exc}", file=sys.stderr)
