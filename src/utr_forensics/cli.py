@@ -6,7 +6,9 @@ import argparse
 import sys
 from pathlib import Path
 
+from .models import SourceScan
 from .pipeline import default_reference_path, run_analysis
+from .reference_io import load_json
 from .sequences import SequenceValidationError
 
 
@@ -21,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--references", type=Path, default=default_reference_path(), help="Local JSON/FASTA reference corpus.")
     run_parser.add_argument("--out", type=Path, default=Path("analysis_runs/latest"), help="Output directory.")
     run_parser.add_argument("--query-id", help="Optional identifier shown in result files and PDF reports.")
+    run_parser.add_argument("--source-scan-file", type=Path, help="Optional JSON file with extra source-scan rows for the report.")
     run_parser.add_argument(
         "--deep-external-search",
         action="store_true",
@@ -53,6 +56,7 @@ def _run(args) -> int:
             references_path=args.references,
             deep_external_search=args.deep_external_search,
             query_id=args.query_id,
+            extra_source_scans=_load_source_scans(args.source_scan_file) if args.source_scan_file else None,
         )
     except SequenceValidationError as exc:
         print(f"Sequence validation failed: {exc}", file=sys.stderr)
@@ -73,6 +77,12 @@ def _run(args) -> int:
             f"canonical {candidate.canonical_identity_confidence:.0%}"
         )
     return 0
+
+
+def _load_source_scans(path: Path) -> list[SourceScan]:
+    payload = load_json(path)
+    rows = payload.get("source_scans", payload) if isinstance(payload, dict) else payload
+    return [SourceScan(**row) for row in rows]
 
 
 if __name__ == "__main__":

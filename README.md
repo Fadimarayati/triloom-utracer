@@ -62,6 +62,13 @@ $env:PYTHONPATH = "src"
 python -m utr_forensics.cli run --sequence-file examples/example_sequence.txt --query-id TriUTR-0001 --out analysis_runs/TriUTR-0001
 ```
 
+Add externally collected search summaries to the PDF source-scan table:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m utr_forensics.cli run --sequence-file examples/example_sequence.txt --query-id TriUTR-0001 --source-scan-file external_scans.json --out analysis_runs/TriUTR-0001
+```
+
 Or paste a raw sequence:
 
 ```powershell
@@ -74,7 +81,7 @@ The command writes:
 - `result.json`
 - `query_track.svg` and `query_track.png`
 - `alignment_view.svg` and `alignment_view.png`
-- `triloom_utracer_report.pdf`
+- `{query_id}_triloom_utracer_report.pdf` when `--query-id` is provided, otherwise `triloom_utracer_report.pdf`
 
 ## Local web UI
 

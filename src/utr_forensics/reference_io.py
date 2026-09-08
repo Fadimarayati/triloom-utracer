@@ -21,10 +21,14 @@ def load_reference_file(path: str | Path) -> list[ReferenceRecord]:
 
 
 def load_json_references(path: str | Path) -> list[ReferenceRecord]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    data = load_json(path)
     if not isinstance(data, list):
         raise ValueError("Reference JSON must be a list of records.")
     return [record_from_mapping(item) for item in data]
+
+
+def load_json(path: str | Path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def load_fasta_references(path: str | Path, *, source: str = "local_fasta") -> list[ReferenceRecord]:
@@ -82,4 +86,3 @@ def _record_from_fasta(header: str, sequence_parts: Iterable[str], source: str) 
         provenance=f"Loaded from local FASTA file with header: {header}",
         provenance_score=0.5,
     )
-

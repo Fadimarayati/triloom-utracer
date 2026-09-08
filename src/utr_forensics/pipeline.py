@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .adapters.external import build_external_notices
@@ -26,6 +27,7 @@ def run_analysis(
     references_path: str | Path | None = None,
     deep_external_search: bool = False,
     query_id: str | None = None,
+    extra_source_scans: list[SourceScan] | None = None,
 ) -> AnalysisResult:
     normalized = normalize_sequence(raw_sequence)
     output = Path(output_dir)
@@ -37,7 +39,8 @@ def run_analysis(
     signals = classify_sequence(normalized)
     segments = select_segments(candidates, normalized.length)
     notices = build_external_notices(deep_external_search=deep_external_search)
-    source_scans = build_source_scans(candidates, notices)
+    source_scans = build_source_scans(candidates, notices, extra_source_scans=extra_source_scans)
+    notices = filter_notices_by_source_scans(notices, source_scans)
 
     conclusion, top_confidence = build_conclusion(normalized, candidates, segments, signals)
     result = AnalysisResult(
@@ -65,12 +68,26 @@ def run_analysis(
         alignment_svg=visual_paths["alignment_svg"],
         alignment_png=visual_paths["alignment_png"],
     )
-    result.pdf_path = write_pdf_report(result, output / "triloom_utracer_report.pdf")
+    result.pdf_path = write_pdf_report(result, output / report_filename(query_id))
     write_json(output / "result.json", result.to_dict())
     return result
 
 
-def build_source_scans(candidates: list[Candidate], notices: list[AdapterNotice]) -> list[SourceScan]:
+def report_filename(query_id: str | None) -> str:
+    if not query_id:
+        return "triloom_utracer_report.pdf"
+    safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", query_id.strip()).strip("._-")
+    if not safe_id:
+        return "triloom_utracer_report.pdf"
+    return f"{safe_id}_triloom_utracer_report.pdf"
+
+
+def build_source_scans(
+    candidates: list[Candidate],
+    notices: list[AdapterNotice],
+    *,
+    extra_source_scans: list[SourceScan] | None = None,
+) -> list[SourceScan]:
     scans: list[SourceScan] = []
     by_source: dict[str, list[Candidate]] = {}
     for candidate in candidates:
@@ -89,11 +106,15 @@ def build_source_scans(candidates: list[Candidate], notices: list[AdapterNotice]
                 best_reference_coverage=best.alignment.reference_coverage,
                 best_origin_confidence=best.sequence_origin_confidence,
                 best_canonical_confidence=best.canonical_identity_confidence,
-                note=best.evidence[0] if best.evidence else "Local alignment hit.",
+                note=_best_source_note(best),
             )
         )
 
+    scans.extend(extra_source_scans or [])
+    scanned_source_names = {scan.source for scan in scans}
     for notice in notices:
+        if _notice_has_real_source_hits(notice.adapter, scanned_source_names):
+            continue
         scan_status = "skipped" if notice.status.startswith("skipped") else notice.status
         scans.append(
             SourceScan(
@@ -104,6 +125,36 @@ def build_source_scans(candidates: list[Candidate], notices: list[AdapterNotice]
             )
         )
     return scans
+
+
+def filter_notices_by_source_scans(notices: list[AdapterNotice], scans: list[SourceScan]) -> list[AdapterNotice]:
+    source_names = {scan.source for scan in scans}
+    return [notice for notice in notices if not _notice_has_real_source_hits(notice.adapter, source_names)]
+
+
+def _notice_has_real_source_hits(adapter_name: str, source_names: set[str]) -> bool:
+    normalized_source_names = {source.lower() for source in source_names}
+    if adapter_name.lower() in normalized_source_names:
+        return True
+    source_markers = {
+        "ncbi_blast": ("ncbi_blast",),
+        "ncbi_univec_vecscreen": ("univec", "vecscreen"),
+        "lens_patseq": ("google_patents", "patent", "patseq"),
+        "manufacturer_corpora": ("trilink", "officinae", "manufacturer"),
+        "literature_search": ("literature",),
+    }
+    return any(
+        any(marker in source_name for marker in source_markers.get(adapter_name, ()))
+        for source_name in normalized_source_names
+    )
+
+
+def _best_source_note(candidate: Candidate) -> str:
+    if candidate.reference.provenance:
+        return candidate.reference.provenance
+    if candidate.evidence:
+        return candidate.evidence[0]
+    return "Local alignment hit."
 
 
 def build_conclusion(normalized: NormalizedSequence, candidates, segments, signals) -> tuple[str, float]:

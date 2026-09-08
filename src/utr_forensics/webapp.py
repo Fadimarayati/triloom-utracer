@@ -253,6 +253,7 @@ def _page(raw_sequence: str = "", query_id: str = "", result_html: str = "", err
 
 
 def _result_panel(result, run_id: str, track_svg: str, alignment_svg: str) -> str:
+    pdf_name = Path(result.pdf_path).name if result.pdf_path else "triloom_utracer_report.pdf"
     rows = []
     for index, candidate in enumerate(result.candidates[:6], start=1):
         rows.append(
@@ -279,7 +280,7 @@ def _result_panel(result, run_id: str, track_svg: str, alignment_svg: str) -> st
       <div class="metric"><b>Query</b>{result.normalized.length} nt; GC {result.normalized.gc_fraction:.1%}</div>
     </div>
     <p>
-      <a href="/runs/{run_id}/triloom_utracer_report.pdf">PDF report</a>
+      <a href="/runs/{run_id}/{html.escape(pdf_name)}">PDF report</a>
       &nbsp; <a href="/runs/{run_id}/result.json">JSON</a>
       &nbsp; <a href="/runs/{run_id}/query_track.svg">Track SVG</a>
       &nbsp; <a href="/runs/{run_id}/alignment_view.svg">Alignment SVG</a>

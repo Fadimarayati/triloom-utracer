@@ -240,7 +240,10 @@ def _candidate_table(result: AnalysisResult, styles) -> Table:
         ]
     ]
     for index, candidate in enumerate(result.candidates[:10], start=1):
-        evidence = "; ".join(candidate.evidence[:2]) or candidate.reference.provenance or "-"
+        evidence_parts = [*candidate.evidence[:2]]
+        if candidate.reference.provenance:
+            evidence_parts.append(candidate.reference.provenance)
+        evidence = "; ".join(evidence_parts) or "-"
         rows.append(
             [
                 _cell(str(index), styles),
